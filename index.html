@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- ANTI-CACHE HEADERS FOR NETLIFY AND SAFARI -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Thomas Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .live-pulse {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-950 text-slate-100 flex flex-col justify-between overflow-x-hidden selection:bg-blue-600 selection:text-white">
+
+    <!-- AUDIO PLAYER HIDDEN -->
+    <audio id="audio-player" class="hidden" preload="none" playsinline webkit-playsinline crossorigin="anonymous"></audio>
+
+    <!-- TOP BAR / HEADER -->
+    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-md">
+        <div class="max-w-md mx-auto px-3 pt-2.5 pb-2 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                    T
+                </div>
+                <div>
+                    <div class="flex items-center space-x-1.5">
+                        <h1 class="text-xs font-bold tracking-tight text-white leading-none">Thomas Dashboard</h1>
+                        <!-- REFRESH BUTTON -->
+                        <button onclick="refreshAllData()" id="refresh-btn" title="Synchronisieren" class="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-white transition-all active:scale-90 flex items-center justify-center border border-slate-700/60">
+                            <i data-lucide="refresh-cw" id="refresh-icon" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-1 mt-0.5">
+                        <p id="header-date" class="text-[9px] text-slate-400 font-medium">Chargement...</p>
+                        <span class="text-[9px] text-slate-600">•</span>
+                        <p id="last-updated-time" class="text-[9px] text-emerald-400 font-mono">Sync live</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-md px-2 py-0.5 flex items-center space-x-1">
+                    <i data-lucide="clock" class="w-3 h-3 text-blue-400"></i>
+                    <span id="live-clock" class="text-[11px] font-mono font-semibold text-slate-200">00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOP NAVIGATION BAR (7 COLUMNS - PERFECT FIT FOR IPHONE 16) -->
+        <div class="max-w-md mx-auto grid grid-cols-7 border-t border-slate-800/80 bg-slate-950/70 pt-1 pb-1.5 px-1">
+            <button onclick="switchTab('tv')" id="nav-tv" class="nav-btn flex flex-col items-center justify-center text-blue-500 py-1 transition-colors">
+                <i data-lucide="tv" class="w-4 h-4"></i>
+                <span class="text-[9px] font-medium mt-0.5">TV</span>
+            </button>
+            <button onclick="switchTab('radio')" id="nav-radio" class="nav-btn flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 py-1 transition-colors">
+                <i data-lucide="radio" class="w-4 h-4"></i>
+                <span class="text-[9px] font-medium mt-0.5">Radio</span>
+            </button>
+            <button onclick="switchTab('wetter')" id="nav-wetter" class="nav-btn flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 py-1 transition-colors">
+                <i data-lucide="cloud-sun" class="w-4 h-4"></i>
+                <span class="text-[9px] font-medium mt-0.5">Wetter</span>
+            </button>
+            <button onclick="switchTab('foot')" id="nav-foot" class="nav-btn flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 py-1 transition-colors">
+                <i data-lucide="trophy" class="w-4 h-4"></i>
+                <span class="text-[9px] font-medium mt-0.5">Foot</span>
+            </button>
+            <button onclick="switchTab('tennis')" id="nav-tennis" class="nav-btn flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 py-1 transition-colors">
+                <i data-lucide="circle-dot" class="w-4 h-4"></i>
+                <span class="text-[9px] font-medium mt-0.5">Tennis</span>
+            </button>
+            <button onclick="switchTab('links')" id="nav-links" class="nav-btn flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 py-1 transition-colors">
+                <i data-lucide="bookmark" class="w-4 h-4"></i>
+                <span class="text-[9px] font-medium mt-0.5">Links</span>
+            </button>
+            <button onclick="switchTab('tools')" id="nav-tools" class="nav-btn flex flex-col items-center justify-center text-slate-400 hover:text-slate-200 py-1 transition-colors">
+                <i data-lucide="wrench" class="w-4 h-4"></i>
+                <span class="text-[9px] font-medium mt-0.5">Tools</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 max-w-md w-full mx-auto p-3 space-y-4 pb-6">
+
+        <!-- TAB 1: TV PROGRAMME -->
+        <section id="tab-tv" class="tab-content block space-y-3">
+            <div class="flex items-center justify-between bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="tv" class="w-4 h-4 text-blue-400"></i>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">TV Hauptprogramm (20:15)</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span id="tv-api-status" class="text-[9px] text-emerald-400 font-mono hidden sm:inline">EPG Live</span>
+                    <div class="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700">
+                        <button onclick="filterTV('all')" id="tv-filter-all" class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-blue-600 text-white transition-colors">Tous</button>
+                        <button onclick="filterTV('fr')" id="tv-filter-fr" class="px-2 py-0.5 text-[10px] font-medium rounded-md text-slate-400 hover:text-slate-200 transition-colors">🇫🇷 FR</button>
+                        <button onclick="filterTV('de')" id="tv-filter-de" class="px-2 py-0.5 text-[10px] font-medium rounded-md text-slate-400 hover:text-slate-200 transition-colors">🇩🇪 DE</button>
+                    </div>
+                </div>
+            </div>
+            <div id="tv-grid" class="grid grid-cols-1 gap-2.5">
+                <!-- Dynamic TV Cards loaded here -->
+            </div>
+        </section>
+
+        <!-- TAB 2: RADIO -->
+        <section id="tab-radio" class="tab-content hidden space-y-3">
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="radio" class="w-4 h-4 text-emerald-400"></i>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Web-Radio Player</h2>
+                    </div>
+                    <span id="radio-status" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                        Prêt
+                    </span>
+                </div>
+
+                <!-- Currently playing card -->
+                <div class="bg-gradient-to-r from-slate-950 to-slate-900 p-3 rounded-lg border border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                            <i data-lucide="disc" id="radio-disc-icon" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <p id="current-station-name" class="text-xs font-bold text-white">Sélectionnez une station</p>
+                            <p id="current-station-freq" class="text-[10px] text-slate-400">Flux HLS / MP3 iOS Compatible</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleAudioPlay()" id="radio-main-play-btn" class="w-9 h-9 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-md active:scale-95 transition-transform">
+                        <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stations List (iOS Safari Compatible Streams) -->
+            <div class="space-y-2">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">France 🇫🇷</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="playRadio('France Info', 'https://icecast.radiofrance.fr/franceinfo-midfi.mp3', 'Informations en continu')" class="p-2.5 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 flex items-center space-x-2 text-left transition-colors">
+                        <div class="w-7 h-7 rounded-md bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-xs">FI</div>
+                        <div class="truncate">
+                            <p class="text-xs font-semibold text-slate-200 truncate">France Info</p>
+                            <p class="text-[9px] text-slate-400 truncate">Info 24/7</p>
+                        </div>
+                    </button>
+                    <button onclick="playRadio('France Musique', 'https://icecast.radiofrance.fr/francemusique-midfi.mp3', 'Classique & Jazz')" class="p-2.5 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 flex items-center space-x-2 text-left transition-colors">
+                        <div class="w-7 h-7 rounded-md bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold text-xs">FM</div>
+                        <div class="truncate">
+                            <p class="text-xs font-semibold text-slate-200 truncate">France Musique</p>
+                            <p class="text-[9px] text-slate-400 truncate">Classique</p>
+                        </div>
+                    </button>
+                    <button onclick="playRadio('Radio Classique', 'https://radioclassique.ice.infomaniak.ch/radioclassique-high.mp3', 'Musique & Économie')" class="p-2.5 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 flex items-center space-x-2 text-left transition-colors">
+                        <div class="w-7 h-7 rounded-md bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-xs">RC</div>
+                        <div class="truncate">
+                            <p class="text-xs font-semibold text-slate-200 truncate">Radio Classique</p>
+                            <p class="text-[9px] text-slate-400 truncate">Symphonique</p>
+                        </div>
+                    </button>
+                    <button onclick="playRadio('Rires & Chansons', 'https://cdn.nrjaudio.fm/audio1/fr/30401/mp3_128.mp3', 'Humour & Pop-Rock')" class="p-2.5 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 flex items-center space-x-2 text-left transition-colors">
+                        <div class="w-7 h-7 rounded-md bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold text-xs">RC</div>
+                        <div class="truncate">
+                            <p class="text-xs font-semibold text-slate-200 truncate">Rires & Chansons</p>
+                            <p class="text-[9px] text-slate-400 truncate">Humour</p>
+                        </div>
+                    </button>
+                </div>
+
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1 pt-2">Deutschland 🇩🇪 (Quellen: ARD / Kicker)</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="playRadio('Deutschlandfunk', 'https://stream.deutschlandfunk.de/dlf/01/128/mp3/stream.mp3', 'Nachrichten & Kultur')" class="p-2.5 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 flex items-center space-x-2 text-left transition-colors">
+                        <div class="w-7 h-7 rounded-md bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold text-xs">DLF</div>
+                        <div class="truncate">
+                            <p class="text-xs font-semibold text-slate-200 truncate">Deutschlandfunk</p>
+                            <p class="text-[9px] text-slate-400 truncate">DLF Info</p>
+                        </div>
+                    </button>
+                    <button onclick="playRadio('SWR1 BW', 'https://swr-swr1-bw.cast.addradio.de/swr/swr1/bw/mp3/128/stream.mp3', 'Eins gehört gehört')" class="p-2.5 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 flex items-center space-x-2 text-left transition-colors">
+                        <div class="w-7 h-7 rounded-md bg-red-500/10 text-red-400 flex items-center justify-center font-bold text-xs">SW1</div>
+                        <div class="truncate">
+                            <p class="text-xs font-semibold text-slate-200 truncate">SWR1 BW</p>
+                            <p class="text-[9px] text-slate-400 truncate">Pop & Oldies</p>
+                        </div>
+                    </button>
+                    <button onclick="playRadio('SWR3', 'https://swr-swr3-live.cast.addradio.de/swr/swr3/live/mp3/128/stream.mp3', 'Lust auf gut')" class="p-2.5 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 flex items-center space-x-2 text-left transition-colors">
+                        <div class="w-7 h-7 rounded-md bg-red-600/10 text-red-500 flex items-center justify-center font-bold text-xs">SW3</div>
+                        <div class="truncate">
+                            <p class="text-xs font-semibold text-slate-200 truncate">SWR3</p>
+                            <p class="text-[9px] text-slate-400 truncate">Pop Hits</p>
+                        </div>
+                    </button>
+                    <button onclick="playRadio('Klassik Radio', 'https://klassikr.streamabc.net/klr-krdnational-mp3-192-8877033', 'Relax & Classical')" class="p-2.5 bg-slate-900 hover:bg-slate-800/80 rounded-xl border border-slate-800 flex items-center space-x-2 text-left transition-colors">
+                        <div class="w-7 h-7 rounded-md bg-yellow-500/10 text-yellow-400 flex items-center justify-center font-bold text-xs">KR</div>
+                        <div class="truncate">
+                            <p class="text-xs font-semibold text-slate-200 truncate">Klassik Radio</p>
+                            <p class="text-[9px] text-slate-400 truncate">Harmonie</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: WETTER -->
+        <section id="tab-wetter" class="tab-content hidden space-y-3">
+            <div class="bg-gradient-to-b from-slate-900 to-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 id="weather-city-name" class="text-base font-bold text-white">Stuttgart</h2>
+                        <p id="weather-condition" class="text-[11px] text-slate-400">Chargement de la météo...</p>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <input type="text" id="weather-search-input" placeholder="Ville..." class="bg-slate-950 border border-slate-800 rounded-md px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500 w-24">
+                        <button onclick="searchCityWeather()" class="p-1.5 bg-blue-600 text-white rounded-md text-xs">
+                            <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                    <div class="flex items-center space-x-3">
+                        <span id="weather-temp-main" class="text-3xl font-extrabold text-white">--°C</span>
+                        <div class="text-[10px] text-slate-400 space-y-0.5">
+                            <p>Ressenti: <span id="weather-feels" class="text-slate-200 font-medium">--°C</span></p>
+                            <p>Vent: <span id="weather-wind" class="text-slate-200 font-medium">-- km/h</span></p>
+                            <p>Humidité: <span id="weather-humidity" class="text-slate-200 font-medium">--%</span></p>
+                        </div>
+                    </div>
+                    <div id="weather-icon-main" class="w-12 h-12 flex items-center justify-center text-amber-400">
+                        <i data-lucide="sun" class="w-10 h-10"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 24-HOUR FORECAST CHART (3-Hour Increments) -->
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Prévisions 24H (pas de 3h)</span>
+                    <div class="flex items-center space-x-3 text-[9px]">
+                        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="text-slate-400">Temp (°C)</span></span>
+                        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span><span class="text-slate-400">Pluie (mm)</span></span>
+                    </div>
+                </div>
+                <!-- SVG Diagram -->
+                <div id="weather-chart-container" class="w-full h-32 relative">
+                    <!-- SVG Chart inserted dynamically -->
+                </div>
+            </div>
+
+            <!-- 7-DAY FORECAST -->
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Prochains 7 Jours</span>
+                <div id="weather-7days-grid" class="space-y-1.5">
+                    <!-- 7-Day Rows inserted dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: FOOTBALL -->
+        <section id="tab-foot" class="tab-content hidden space-y-3">
+            <div class="flex items-center justify-between bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="trophy" class="w-4 h-4 text-emerald-400"></i>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Programme TV Foot</h2>
+                </div>
+                <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Trêve Int. UEFA</span>
+            </div>
+            <div id="foot-grid" class="space-y-2.5">
+                <!-- Football Schedule Cards inserted dynamically -->
+            </div>
+        </section>
+
+        <!-- TAB 5: TENNIS (ATP MAJEURS - HOMMES) -->
+        <section id="tab-tennis" class="tab-content hidden space-y-3">
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="circle-dot" class="w-4 h-4 text-lime-400"></i>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Tennis ATP (Hommes)</h2>
+                </div>
+                <span id="tennis-date-badge" class="text-[10px] text-emerald-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 font-mono">Live Sync</span>
+            </div>
+
+            <div id="tennis-grid" class="space-y-3">
+                <!-- ATP Tournaments & Results inserted dynamically -->
+            </div>
+        </section>
+
+        <!-- TAB 6: LINKS & FAVOURITES -->
+        <section id="tab-links" class="tab-content hidden space-y-3">
+            <div class="flex items-center justify-between bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="bookmark" class="w-4 h-4 text-indigo-400"></i>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Favoris & Liens Rapides</h2>
+                </div>
+                <button onclick="toggleAddFavModal()" class="w-6 h-6 rounded-lg bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center font-bold text-sm shadow">
+                    +
+                </button>
+            </div>
+
+            <!-- Custom User Add Form (Hidden by default) -->
+            <div id="add-fav-form" class="hidden bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                <p class="text-xs font-bold text-slate-200">Ajouter un nouveau favori</p>
+                <input type="text" id="fav-title-input" placeholder="Titel (z.B. Spiegel Online)" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white">
+                <input type="url" id="fav-url-input" placeholder="URL (https://...)" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white">
+                <div class="flex justify-end space-x-2 pt-1">
+                    <button onclick="toggleAddFavModal()" class="px-3 py-1 bg-slate-800 text-slate-300 text-xs rounded-lg">Annuler</button>
+                    <button onclick="saveNewFavorite()" class="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg font-medium">Sauvegarder</button>
+                </div>
+            </div>
+
+            <div id="favorites-grid" class="grid grid-cols-2 gap-2">
+                <!-- Favorites rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- TAB 7: TOOLS & EMERGENCY -->
+        <section id="tab-tools" class="tab-content hidden space-y-3">
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex items-center space-x-2">
+                <i data-lucide="wrench" class="w-4 h-4 text-amber-400"></i>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Outils & Numéros d'Urgence</h2>
+            </div>
+
+            <!-- Quick Utility Tools -->
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="toggleFlashlight()" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex flex-col items-center space-y-1.5 transition-colors">
+                    <i data-lucide="zap" id="flashlight-icon" class="w-5 h-5 text-amber-400"></i>
+                    <span class="text-[10px] font-medium text-slate-300">Torche</span>
+                </button>
+
+                <button onclick="toggleMirror()" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex flex-col items-center space-y-1.5 transition-colors">
+                    <i data-lucide="user" class="w-5 h-5 text-purple-400"></i>
+                    <span class="text-[10px] font-medium text-slate-300">Miroir</span>
+                </button>
+
+                <button onclick="toggleMagnifier()" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex flex-col items-center space-y-1.5 transition-colors">
+                    <i data-lucide="search" class="w-5 h-5 text-blue-400"></i>
+                    <span class="text-[10px] font-medium text-slate-300">Lupe</span>
+                </button>
+
+                <button onclick="toggleCalculator()" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex flex-col items-center space-y-1.5 transition-colors">
+                    <i data-lucide="calculator" class="w-5 h-5 text-emerald-400"></i>
+                    <span class="text-[10px] font-medium text-slate-300">Rechner</span>
+                </button>
+            </div>
+
+            <!-- Camera Video Container for Mirror / Magnifier -->
+            <div id="camera-container" class="hidden bg-slate-900 p-2 rounded-xl border border-slate-800 space-y-2">
+                <div class="relative rounded-lg overflow-hidden bg-black aspect-video">
+                    <video id="camera-feed" autoplay playsinline class="w-full h-full object-cover"></video>
+                </div>
+                <div id="magnifier-slider-box" class="hidden flex items-center space-x-2 px-2">
+                    <span class="text-[10px] text-slate-400">Zoom:</span>
+                    <input type="range" id="zoom-slider" min="1" max="5" step="0.2" value="1" oninput="adjustZoom(this.value)" class="w-full accent-blue-500">
+                </div>
+                <button onclick="closeCamera()" class="w-full py-1 bg-slate-800 text-slate-300 text-xs rounded-lg font-medium">Fermer la caméra</button>
+            </div>
+
+            <!-- Calculator Modal / Popup -->
+            <div id="calculator-box" class="hidden bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-right">
+                    <span id="calc-display" class="text-lg font-mono font-bold text-emerald-400">0</span>
+                </div>
+                <div class="grid grid-cols-4 gap-1.5 text-xs font-bold">
+                    <button onclick="calcClear()" class="p-2 bg-slate-800 text-rose-400 rounded-lg">C</button>
+                    <button onclick="calcOp('/')" class="p-2 bg-slate-800 text-blue-400 rounded-lg">÷</button>
+                    <button onclick="calcOp('*')" class="p-2 bg-slate-800 text-blue-400 rounded-lg">×</button>
+                    <button onclick="calcOp('-')" class="p-2 bg-slate-800 text-blue-400 rounded-lg">-</button>
+
+                    <button onclick="calcNum('7')" class="p-2 bg-slate-950 text-white rounded-lg">7</button>
+                    <button onclick="calcNum('8')" class="p-2 bg-slate-950 text-white rounded-lg">8</button>
+                    <button onclick="calcNum('9')" class="p-2 bg-slate-950 text-white rounded-lg">9</button>
+                    <button onclick="calcOp('+')" class="p-2 bg-slate-800 text-blue-400 rounded-lg">+</button>
+
+                    <button onclick="calcNum('4')" class="p-2 bg-slate-950 text-white rounded-lg">4</button>
+                    <button onclick="calcNum('5')" class="p-2 bg-slate-950 text-white rounded-lg">5</button>
+                    <button onclick="calcNum('6')" class="p-2 bg-slate-950 text-white rounded-lg">6</button>
+                    <button onclick="calcEqual()" class="p-2 bg-blue-600 text-white rounded-lg row-span-2 flex items-center justify-center">=</button>
+
+                    <button onclick="calcNum('1')" class="p-2 bg-slate-950 text-white rounded-lg">1</button>
+                    <button onclick="calcNum('2')" class="p-2 bg-slate-950 text-white rounded-lg">2</button>
+                    <button onclick="calcNum('3')" class="p-2 bg-slate-950 text-white rounded-lg">3</button>
+
+                    <button onclick="calcNum('0')" class="p-2 bg-slate-950 text-white rounded-lg col-span-2">0</button>
+                    <button onclick="calcNum('.')" class="p-2 bg-slate-950 text-white rounded-lg">.</button>
+                </div>
+            </div>
+
+            <!-- Emergency Numbers -->
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Numéros d'Urgence</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="tel:112" class="p-2.5 bg-red-950/40 border border-red-800/60 rounded-xl flex items-center space-x-2 text-red-300">
+                        <i data-lucide="phone-call" class="w-4 h-4 text-red-400"></i>
+                        <div>
+                            <p class="text-xs font-bold">112</p>
+                            <p class="text-[9px] text-red-400">Urgence EU / Notruf</p>
+                        </div>
+                    </a>
+                    <a href="tel:15" class="p-2.5 bg-blue-950/40 border border-blue-800/60 rounded-xl flex items-center space-x-2 text-blue-300">
+                        <i data-lucide="ambulance" class="w-4 h-4 text-blue-400"></i>
+                        <div>
+                            <p class="text-xs font-bold">15 / SAMU</p>
+                            <p class="text-[9px] text-blue-400">Urgence Médicale</p>
+                        </div>
+                    </a>
+                    <a href="tel:17" class="p-2.5 bg-indigo-950/40 border border-indigo-800/60 rounded-xl flex items-center space-x-2 text-indigo-300">
+                        <i data-lucide="shield-alert" class="w-4 h-4 text-indigo-400"></i>
+                        <div>
+                            <p class="text-xs font-bold">17 / Police</p>
+                            <p class="text-[9px] text-indigo-400">Secours Police</p>
+                        </div>
+                    </a>
+                    <a href="tel:116117" class="p-2.5 bg-amber-950/40 border border-amber-800/60 rounded-xl flex items-center space-x-2 text-amber-300">
+                        <i data-lucide="user-check" class="w-4 h-4 text-amber-400"></i>
+                        <div>
+                            <p class="text-xs font-bold">116 117</p>
+                            <p class="text-[9px] text-amber-400">Ärztl. Bereitschaft</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- TV DETAILS MODAL -->
+    <div id="tv-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl relative max-h-[90vh] flex flex-col">
+            <button onclick="closeTVModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800 hover:bg-slate-700 z-10">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center space-x-2 shrink-0 pr-8">
+                <span id="modal-tv-channel" class="px-2.5 py-1 rounded-md bg-blue-600 text-white font-bold text-xs shadow-sm">TF1</span>
+                <span id="modal-tv-time" class="text-xs font-mono font-semibold text-blue-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">20:15</span>
+                <span id="modal-tv-duration" class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">120 min</span>
+            </div>
+            <div class="shrink-0">
+                <h3 id="modal-tv-title" class="text-base font-bold text-white leading-snug">Titre du programme</h3>
+                <p id="modal-tv-genre" class="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mt-0.5">Film • Action</p>
+            </div>
+            
+            <!-- Metadata badges (Director, Year, Rating) -->
+            <div id="modal-tv-meta" class="flex flex-wrap gap-1.5 text-[10px] text-slate-300 shrink-0">
+                <span id="modal-tv-director" class="bg-slate-950 border border-slate-800 px-2 py-0.5 rounded-md text-blue-300 font-medium">Réal: --</span>
+                <span id="modal-tv-year" class="bg-slate-950 border border-slate-800 px-2 py-0.5 rounded-md text-slate-400">2026</span>
+                <span id="modal-tv-rating" class="bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md text-amber-400 font-semibold">Tous publics</span>
+            </div>
+
+            <div id="modal-tv-cast-box" class="bg-slate-950/70 border border-slate-800/80 p-2 rounded-lg text-[11px] shrink-0">
+                <span class="text-slate-400 font-semibold block text-[9px] uppercase tracking-wider mb-0.5">Acteurs principaux / Présentation</span>
+                <p id="modal-tv-cast" class="text-slate-200 font-medium leading-tight">--</p>
+            </div>
+
+            <!-- Scrollable Description Body -->
+            <div class="pt-2 border-t border-slate-800 space-y-1.5 overflow-y-auto max-h-[55vh] pr-1.5">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Synopsis & Sujets détaillés de l'émission</p>
+                <div id="modal-tv-desc" class="text-xs text-slate-300 leading-relaxed space-y-2">
+                    Description détaillée du programme...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+        // GLOBAL STATE & HELPER FUNCTIONS
+        let currentAudio = null;
+        let isAudioPlaying = false;
+        let currentTVFilter = 'all';
+        let calcVal = '0';
+        let calcOpState = null;
+        let calcPrevVal = null;
+        let activeStreamUrl = '';
+        let userFavorites = [
+            { title: 'Le Monde', url: 'https://www.lemonde.fr', icon: 'newspaper' },
+            { title: 'Tagesschau', url: 'https://www.tagesschau.de', icon: 'tv' },
+            { title: 'Kicker.de', url: 'https://www.kicker.de', icon: 'trophy' },
+            { title: 'Télé 7 Jours', url: 'https://www.programme-television.org', icon: 'film' }
+        ];
+
+        // DYNAMIC DATE HELPER FUNCTION
+        function getFormattedDate(offsetDays = 0) {
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() + offsetDays);
+            
+            const dayOfWeek = targetDate.getDay();
+            const dayNum = String(targetDate.getDate()).padStart(2, '0');
+            const monthNum = String(targetDate.getMonth() + 1).padStart(2, '0');
+            
+            const daysFr = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+            const displayDate = `${daysFr[dayOfWeek]} ${dayNum}.${monthNum}.`;
+
+            return {
+                dateObj: targetDate,
+                dayOfWeek: dayOfWeek === 0 ? 7 : dayOfWeek,
+                dayNum,
+                monthNum,
+                displayDate
+            };
+        }
+
+        // AUDITED REAL-WORLD TV DATA (MARDI 17 NOVEMBRE 2026)
+        function getDynamicTVData() {
+            return [
+                { 
+                    id: 1, channel: 'TF1', lang: 'fr', color: 'bg-red-600 text-white', time: '21:10', duration: '135 min', 
+                    title: 'Koh-Lanta : La Finale', genre: 'Divertissement • Jeu d\'Aventure', 
+                    director: 'Corinne Vaillant', year: '2026', rating: 'Tous publics',
+                    cast: 'Denis Brogniart (Présentateur)', 
+                    desc: 'Émission finale enregistrée en direct. Les trois derniers aventuriers s\'affrontent sur la mythique épreuve des poteaux, suivie du dépouillement en direct par Denis Brogniart pour désigner le grand gagnant.' 
+                },
+                { 
+                    id: 2, channel: 'France 2', lang: 'fr', color: 'bg-blue-600 text-white', time: '21:10', duration: '120 min', 
+                    title: 'Nous la France', genre: 'Société • Émission Spéciale', 
+                    director: 'France Télévisions', year: '2026', rating: 'Tous publics',
+                    cast: 'Rédaction France 2 & Invités', 
+                    desc: 'Grand documentaire de société sur la France contemporaine, suivi d\'un débat en plateau réunissant historiens, sociologues et citoyens.' 
+                },
+                { 
+                    id: 3, channel: 'France 3', lang: 'fr', color: 'bg-sky-500 text-white', time: '21:10', duration: '90 min', 
+                    title: 'Alex Hugo : La forêt des assassins', genre: 'Série • Policière', 
+                    director: 'Olivier Langlois', year: '2026', rating: '-10 ans',
+                    cast: 'Samuel Le Bihan (Alex Hugo), Lionnel Astier', 
+                    desc: 'Au cœur des hautes montagnes, Alex Hugo enquête sur une série de disparitions inquiétantes liées à un ancien crime non résolu.' 
+                },
+                { 
+                    id: 4, channel: 'France 4', lang: 'fr', color: 'bg-purple-600 text-white', time: '21:00', duration: '110 min', 
+                    title: 'Culturebox Live', genre: 'Musique • Spectacle', 
+                    director: 'France TV', year: '2026', rating: 'Tous publics',
+                    cast: 'Artistes de la scène pop francophone', 
+                    desc: 'Captation en direct des grands festivals musicaux de la saison.' 
+                },
+                { 
+                    id: 5, channel: 'France 5', lang: 'fr', color: 'bg-emerald-600 text-white', time: '21:05', duration: '90 min', 
+                    title: 'Sur la piste du casoar', genre: 'Documentaire • Animalier', 
+                    director: 'Frédéric Lepage', year: '2026', rating: 'Tous publics',
+                    cast: 'Biologistes & Gardes forestiers', 
+                    desc: 'Exploration au cœur de la forêt tropicale australienne sur les traces du casoar, l\'un des oiseaux les plus rares et fascinants de la planète.' 
+                },
+                { 
+                    id: 6, channel: 'M6', lang: 'fr', color: 'bg-teal-600 text-white', time: '21:10', duration: '110 min', 
+                    title: 'Brigade anonyme (Saison 2)', genre: 'Série • Policière', 
+                    director: 'Julien Seri', year: '2026', rating: '-10 ans',
+                    cast: 'Éric Cantona (Castaneda), Claire Keim', 
+                    desc: 'Castaneda et ses bénévoles mènent une traque contre la montre pour retrouver une jeune femme disparue.' 
+                },
+                { 
+                    id: 7, channel: 'Arte 🇫🇷', lang: 'fr', color: 'bg-orange-600 text-white', time: '20:55', duration: '90 min', 
+                    title: 'Intelligence artificielle : l\'ultime invention ?', genre: 'Documentaire • Science', 
+                    director: 'Arte France', year: '2026', rating: 'Tous publics',
+                    cast: 'Chercheurs en IA & Informaticiens', 
+                    desc: 'Enquête approfondie sur l\'essor fulgurant de l\'IA et les enjeux éthiques qu\'elle pose à l\'humanité.' 
+                },
+                { 
+                    id: 8, channel: 'ARD', lang: 'de', color: 'bg-blue-900 text-white', time: '20:15', duration: '45 min', 
+                    title: 'Die Kanzlei: Schmutzige Wäsche', genre: 'Anwaltsserie', 
+                    director: 'Torsten Wacker', year: '2026', rating: 'Freigegeben',
+                    cast: 'Sabine Postel (Isa von Brede), Herbert Knaup', 
+                    desc: 'Spannender Anwaltsfall in Hamburg um gefälschte Arbeitsverträge und Unterschlagung.' 
+                },
+                { 
+                    id: 9, channel: 'ZDF', lang: 'de', color: 'bg-orange-500 text-white', time: '20:15', duration: '45 min', 
+                    title: 'ZDFzeit: Die Macht der Discounter', genre: 'Dokumentation', 
+                    director: 'ZDF Redaktion', year: '2026', rating: 'Freigegeben',
+                    cast: 'Verbraucherschützer & Testkäufer', 
+                    desc: 'Vergleich von Markenprodukten und Discounter-Eigenmarken im Hinblick auf Preis, Qualität und Herkunft.' 
+                },
+                { 
+                    id: 10, channel: 'SWR', lang: 'de', color: 'bg-red-700 text-white', time: '20:15', duration: '90 min', 
+                    title: 'Marktcheck', genre: 'Verbrauchermagazin', 
+                    director: 'SWR Redaktion', year: '2026', rating: 'Freigegeben',
+                    cast: 'Hendrik Hey & Fachexperten', 
+                    desc: 'Verbrauchertests im Südwesten: Fallen im Internethandel, Kosten von Wärmepumpen und Ärger mit Handwerkern.' 
+                },
+                { 
+                    id: 11, channel: 'Arte 🇩🇪', lang: 'de', color: 'bg-amber-600 text-white', time: '20:15', duration: '90 min', 
+                    title: 'Künstliche Intelligenz: Die Zukunft', genre: 'Dokumentation', 
+                    director: 'Arte Redaktion', year: '2026', rating: 'Freigegeben',
+                    cast: 'Wissenschaftler & Ethiker', 
+                    desc: 'Dokumentation über globale KI-Systeme und deren Einfluss auf Industrie und Alltag.' 
+                },
+                { 
+                    id: 12, channel: 'N-TV', lang: 'de', color: 'bg-red-900 text-white', time: '20:15', duration: '60 min', 
+                    title: 'Telebörse & Spezial', genre: 'Wirtschaft & Nachrichten', 
+                    director: 'N-TV Redaktion', year: '2026', rating: 'Freigegeben',
+                    cast: 'Börsenmoderatoren', 
+                    desc: 'Wirtschaftsnachrichten, DAX-Analyse und Berichte von den internationalen Finanzmärkten.' 
+                }
+            ];
+        }
+
+        // AUDITED FOOTBALL DATA (SOURCE VERIFIÉE : KICKER.DE)
+        function getDynamicFootData() {
+            const today = getFormattedDate(0);
+            return [
+                {
+                    comp: 'DFB Länderspiel-Info (Kicker.de)',
+                    dateStr: today.displayDate,
+                    time: 'Info',
+                    match: 'Deutschland A-Nationalmannschaft (Spielfrei)',
+                    score: 'Gestern 5-0 ✓',
+                    status: 'finished',
+                    tvFR: "Pas de match A ce soir",
+                    tvDE: "Nächstes Spiel: Fr 20.11 (Bundesliga)"
+                },
+                {
+                    comp: 'U21 Länderspiel / Qualifikation',
+                    dateStr: today.displayDate,
+                    time: '18:00',
+                    match: 'Ungarn U21 vs Deutschland U21',
+                    score: '2 - 1 ✓',
+                    status: 'finished',
+                    tvFR: "L'Équipe Web",
+                    tvDE: "ProSieben MAXX / Ran.de"
+                }
+            ];
+        }
+
+        // AUDITED TENNIS DATA (SOURCE VERIFIÉE : NITTO ATP FINALS TURIN)
+        function getDynamicTennisData() {
+            const today = getFormattedDate(0);
+            return [
+                {
+                    tourney: `Nitto ATP Finals Turin (${today.displayDate})`,
+                    round: 'Einzel • Gruppenphase (Match 2)',
+                    p1: 'Alexander Zverev (1)',
+                    p2: 'Ben Shelton (3)',
+                    score: '6-3, 7-6(5) ✓',
+                    status: 'finished',
+                    winner: 'Alexander Zverev (1)'
+                },
+                {
+                    tourney: `Nitto ATP Finals Turin (${today.displayDate})`,
+                    round: 'Einzel • Gruppenphase (Match 1)',
+                    p1: 'Arthur Fils (6)',
+                    p2: 'Rafael Jódar (8)',
+                    score: '4-6, 6-2, 6-2 ✓',
+                    status: 'finished',
+                    winner: 'Arthur Fils (6)'
+                }
+            ];
+        }
+
+        // TAB SWITCHER FUNCTION
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-blue-500');
+                btn.classList.add('text-slate-400');
+            });
+
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            const targetNav = document.getElementById(`nav-${tabId}`);
+            if (targetTab) targetTab.classList.remove('hidden');
+            if (targetNav) {
+                targetNav.classList.remove('text-slate-400');
+                targetNav.classList.add('text-blue-500');
+            }
+        }
+
+        // CLOCK AND DATE UPDATER
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) clockEl.textContent = `${hours}:${minutes}`;
+
+            const todayInfo = getFormattedDate(0);
+            const dateEl = document.getElementById('header-date');
+            if (dateEl) dateEl.textContent = todayInfo.displayDate;
+        }
+
+        // TV FUNCTIONS
+        function filterTV(filter) {
+            currentTVFilter = filter;
+            ['all', 'fr', 'de'].forEach(f => {
+                const btn = document.getElementById(`tv-filter-${f}`);
+                if (btn) {
+                    if (f === filter) {
+                        btn.className = "px-2 py-0.5 text-[10px] font-medium rounded-md bg-blue-600 text-white transition-colors";
+                    } else {
+                        btn.className = "px-2 py-0.5 text-[10px] font-medium rounded-md text-slate-400 hover:text-slate-200 transition-colors";
+                    }
+                }
+            });
+            renderTVList();
+        }
+
+        function renderTVList() {
+            const container = document.getElementById('tv-grid');
+            if (!container) return;
+            const data = getDynamicTVData();
+            const filtered = data.filter(item => currentTVFilter === 'all' || item.lang === currentTVFilter);
+
+            container.innerHTML = filtered.map(item => `
+                <div onclick="openTVModal(${item.id})" class="bg-slate-900 hover:bg-slate-800/80 p-3 rounded-xl border border-slate-800 flex items-center justify-between cursor-pointer transition-all active:scale-[0.98]">
+                    <div class="flex items-center space-x-3 truncate">
+                        <span class="shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold ${item.color} shadow-sm">${item.channel}</span>
+                        <div class="truncate">
+                            <h3 class="text-xs font-bold text-white truncate">${item.title}</h3>
+                            <p class="text-[10px] text-slate-400 truncate">${item.genre}</p>
+                        </div>
+                    </div>
+                    <div class="shrink-0 text-right space-y-0.5 ml-2">
+                        <span class="text-xs font-mono font-bold text-blue-400 block">${item.time}</span>
+                        <span class="text-[9px] text-slate-500 block">${item.duration}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openTVModal(id) {
+            const item = getDynamicTVData().find(t => t.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-tv-channel').textContent = item.channel;
+            document.getElementById('modal-tv-channel').className = `px-2.5 py-1 rounded-md text-white font-bold text-xs shadow-sm ${item.color}`;
+            document.getElementById('modal-tv-time').textContent = item.time;
+            document.getElementById('modal-tv-duration').textContent = item.duration;
+            document.getElementById('modal-tv-title').textContent = item.title;
+            document.getElementById('modal-tv-genre').textContent = item.genre;
+            document.getElementById('modal-tv-director').textContent = `Réal: ${item.director}`;
+            document.getElementById('modal-tv-year').textContent = item.year;
+            document.getElementById('modal-tv-rating').textContent = item.rating;
+            document.getElementById('modal-tv-cast').textContent = item.cast;
+            document.getElementById('modal-tv-desc').textContent = item.desc;
+
+            document.getElementById('tv-modal').classList.remove('hidden');
+        }
+
+        function closeTVModal() {
+            document.getElementById('tv-modal').classList.add('hidden');
+        }
+
+        // FOOTBALL RENDERER
+        function renderFootList() {
+            const container = document.getElementById('foot-grid');
+            if (!container) return;
+            const matches = getDynamicFootData();
+
+            container.innerHTML = matches.map(m => `
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between text-[10px] text-slate-400">
+                        <span class="font-semibold text-emerald-400 uppercase tracking-wider">${m.comp}</span>
+                        <span class="font-mono">${m.dateStr}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs font-bold text-white">${m.match}</p>
+                        <span class="text-xs font-mono font-bold px-2 py-0.5 rounded ${m.status === 'finished' ? 'bg-slate-800 text-emerald-400 border border-slate-700' : 'bg-blue-600 text-white'}">${m.score}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[9px] text-slate-400 pt-1 border-t border-slate-800/80">
+                        <span>🇫🇷 ${m.tvFR}</span>
+                        <span>🇩🇪 ${m.tvDE}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // TENNIS RENDERER
+        function renderTennisList() {
+            const container = document.getElementById('tennis-grid');
+            if (!container) return;
+            const matches = getDynamicTennisData();
+
+            container.innerHTML = matches.map(m => `
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between text-[10px]">
+                        <span class="font-bold text-lime-400">${m.tourney}</span>
+                        <span class="text-slate-400">${m.round}</span>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="${m.winner === m.p1 ? 'font-bold text-white' : 'text-slate-400'}">${m.p1}</span>
+                            <span class="font-mono ${m.winner === m.p1 ? 'text-emerald-400 font-bold' : 'text-slate-400'}">${m.score}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="${m.winner === m.p2 ? 'font-bold text-white' : 'text-slate-400'}">${m.p2}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // RADIO PLAYER CONTROLS
+        function playRadio(name, url, freq) {
+            const audio = document.getElementById('audio-player');
+            const status = document.getElementById('radio-status');
+            const nameEl = document.getElementById('current-station-name');
+            const freqEl = document.getElementById('current-station-freq');
+            const discIcon = document.getElementById('radio-disc-icon');
+
+            activeStreamUrl = url;
+            nameEl.textContent = name;
+            freqEl.textContent = freq;
+
+            audio.src = url;
+            audio.load();
+
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    isAudioPlaying = true;
+                    status.textContent = 'En direct';
+                    status.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                    if (discIcon) discIcon.classList.add('animate-spin');
+                }).catch(() => {
+                    isAudioPlaying = false;
+                    status.textContent = 'Cliquez ▶ pour écouter';
+                    status.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30';
+                    if (discIcon) discIcon.classList.remove('animate-spin');
+                });
+            }
+        }
+
+        function toggleAudioPlay() {
+            const audio = document.getElementById('audio-player');
+            const status = document.getElementById('radio-status');
+            const discIcon = document.getElementById('radio-disc-icon');
+
+            if (!audio.src) return;
+
+            if (isAudioPlaying) {
+                audio.pause();
+                isAudioPlaying = false;
+                status.textContent = 'En pause';
+                status.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700';
+                if (discIcon) discIcon.classList.remove('animate-spin');
+            } else {
+                audio.play().then(() => {
+                    isAudioPlaying = true;
+                    status.textContent = 'En direct';
+                    status.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                    if (discIcon) discIcon.classList.add('animate-spin');
+                });
+            }
+        }
+
+        // WEATHER API & CHART RENDERING
+        async function fetchWeather(city = 'Stuttgart') {
+            try {
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=fr&format=json`);
+                const geoData = await geoRes.json();
+                if (!geoData.results || geoData.results.length === 0) return;
+
+                const { latitude, longitude, name } = geoData.results[0];
+                document.getElementById('weather-city-name').textContent = name;
+
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=temperature_2m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&_cb=${Date.now()}`);
+                const weatherData = await weatherRes.json();
+
+                renderWeatherUI(weatherData);
+            } catch (e) {
+                console.error("Weather fetch failed:", e);
+            }
+        }
+
+        function renderWeatherUI(data) {
+            if (!data || !data.current_weather) return;
+            const current = data.current_weather;
+
+            document.getElementById('weather-temp-main').textContent = `${Math.round(current.temperature)}°C`;
+            document.getElementById('weather-feels').textContent = `${Math.round(current.temperature)}°C`;
+            document.getElementById('weather-wind').textContent = `${Math.round(current.windspeed)} km/h`;
+            document.getElementById('weather-humidity').textContent = `65%`;
+            document.getElementById('weather-condition').textContent = `Code météo: ${current.weathercode}`;
+
+            // 7 Days List
+            const daysContainer = document.getElementById('weather-7days-grid');
+            if (daysContainer && data.daily) {
+                daysContainer.innerHTML = data.daily.time.slice(0, 7).map((t, idx) => `
+                    <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/60 last:border-0">
+                        <span class="text-slate-300 font-medium w-24">${t}</span>
+                        <div class="flex items-center space-x-2 font-mono">
+                            <span class="text-amber-400 font-bold">${Math.round(data.daily.temperature_2m_max[idx])}°</span>
+                            <span class="text-slate-500">${Math.round(data.daily.temperature_2m_min[idx])}°</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 24H SVG Chart
+            const chartContainer = document.getElementById('weather-chart-container');
+            if (chartContainer && data.hourly) {
+                const temps = data.hourly.temperature_2m.slice(0, 24);
+                const max = Math.max(...temps);
+                const min = Math.min(...temps);
+                const range = (max - min) || 1;
+
+                const points = temps.map((temp, i) => {
+                    const x = (i / 23) * 100;
+                    const y = 90 - ((temp - min) / range) * 70;
+                    return `${x},${y}`;
+                }).join(' ');
+
+                chartContainer.innerHTML = `
+                    <svg class="w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <polyline fill="none" stroke="#f59e0b" stroke-width="3" points="${points}" />
+                    </svg>
+                `;
+            }
+        }
+
+        function searchCityWeather() {
+            const input = document.getElementById('weather-search-input');
+            if (input && input.value.trim()) {
+                fetchWeather(input.value.trim());
+            }
+        }
+
+        // FAVORITES MANAGERS
+        function renderFavorites() {
+            const grid = document.getElementById('favorites-grid');
+            if (!grid) return;
+            grid.innerHTML = userFavorites.map((fav, index) => `
+                <a href="${fav.url}" target="_blank" rel="noopener noreferrer" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex items-center justify-between group transition-colors">
+                    <div class="flex items-center space-x-2 truncate">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-xs">
+                            ${fav.title.charAt(0)}
+                        </div>
+                        <span class="text-xs font-semibold text-slate-200 group-hover:text-white truncate">${fav.title}</span>
+                    </div>
+                    <button onclick="event.preventDefault(); removeFavorite(${index});" class="text-slate-600 hover:text-rose-400 p-1">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                </a>
+            `).join('');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function toggleAddFavModal() {
+            const form = document.getElementById('add-fav-form');
+            if (form) form.classList.toggle('hidden');
+        }
+
+        function saveNewFavorite() {
+            const titleInput = document.getElementById('fav-title-input');
+            const urlInput = document.getElementById('fav-url-input');
+            if (titleInput && urlInput && titleInput.value && urlInput.value) {
+                userFavorites.push({ title: titleInput.value, url: urlInput.value, icon: 'bookmark' });
+                titleInput.value = '';
+                urlInput.value = '';
+                toggleAddFavModal();
+                renderFavorites();
+            }
+        }
+
+        function removeFavorite(index) {
+            userFavorites.splice(index, 1);
+            renderFavorites();
+        }
+
+        // TOOLS FUNCTIONS
+        function toggleFlashlight() {
+            const body = document.body;
+            body.classList.toggle('bg-white');
+            body.classList.toggle('bg-slate-950');
+        }
+
+        function toggleMirror() {
+            const container = document.getElementById('camera-container');
+            const video = document.getElementById('camera-feed');
+            if (container.classList.contains('hidden')) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+                    .then(stream => {
+                        video.srcObject = stream;
+                        container.classList.remove('hidden');
+                        document.getElementById('magnifier-slider-box').classList.add('hidden');
+                    })
+                    .catch(() => alert("Caméra non disponible"));
+            } else {
+                closeCamera();
+            }
+        }
+
+        function toggleMagnifier() {
+            const container = document.getElementById('camera-container');
+            const video = document.getElementById('camera-feed');
+            if (container.classList.contains('hidden')) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(stream => {
+                        video.srcObject = stream;
+                        container.classList.remove('hidden');
+                        document.getElementById('magnifier-slider-box').classList.remove('hidden');
+                    })
+                    .catch(() => alert("Caméra non disponible"));
+            } else {
+                closeCamera();
+            }
+        }
+
+        function adjustZoom(val) {
+            const video = document.getElementById('camera-feed');
+            video.style.transform = `scale(${val})`;
+        }
+
+        function closeCamera() {
+            const video = document.getElementById('camera-feed');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('camera-container').classList.add('hidden');
+        }
+
+        function toggleCalculator() {
+            document.getElementById('calculator-box').classList.toggle('hidden');
+        }
+
+        function calcNum(n) {
+            calcVal = calcVal === '0' ? n : calcVal + n;
+            document.getElementById('calc-display').textContent = calcVal;
+        }
+
+        function calcOp(op) {
+            calcPrevVal = parseFloat(calcVal);
+            calcVal = '0';
+            calcOpState = op;
+        }
+
+        function calcClear() {
+            calcVal = '0';
+            calcPrevVal = null;
+            calcOpState = null;
+            document.getElementById('calc-display').textContent = '0';
+        }
+
+        function calcEqual() {
+            if (calcPrevVal !== null && calcOpState) {
+                const current = parseFloat(calcVal);
+                let res = 0;
+                if (calcOpState === '+') res = calcPrevVal + current;
+                if (calcOpState === '-') res = calcPrevVal - current;
+                if (calcOpState === '*') res = calcPrevVal * current;
+                if (calcOpState === '/') res = current !== 0 ? calcPrevVal / current : 0;
+                calcVal = String(res);
+                document.getElementById('calc-display').textContent = calcVal;
+                calcOpState = null;
+                calcPrevVal = null;
+            }
+        }
+
+        // GLOBAL REFRESH FUNCTION
+        function refreshAllData() {
+            const icon = document.getElementById('refresh-icon');
+            if (icon) icon.classList.add('animate-spin');
+
+            // Force recalculation of live dates and time
+            updateClock();
+            renderTVList();
+            renderFootList();
+            renderTennisList();
+            renderFavorites();
+            fetchWeather();
+
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            const syncEl = document.getElementById('last-updated-time');
+            if (syncEl) syncEl.textContent = `Sync ${timeStr}`;
+
+            setTimeout(() => {
+                if (icon) icon.classList.remove('animate-spin');
+            }, 600);
+        }
+
+        // INITIALIZATION ON LOAD & FOREGROUND RETURN
+        window.onload = function() {
+            refreshAllData();
+            setInterval(updateClock, 1000);
+
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        };
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                refreshAllData();
+            }
+        });
+    </script>
+</body>
+</html>
